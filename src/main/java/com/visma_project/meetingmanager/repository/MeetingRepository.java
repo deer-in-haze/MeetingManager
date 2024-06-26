@@ -3,6 +3,8 @@ package com.visma_project.meetingmanager.repository;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.visma_project.meetingmanager.model.Meeting;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -16,7 +18,9 @@ import java.util.Optional;
 @Repository
 public class MeetingRepository {
 
-    private final String filePath = "meetings.json";
+    private static final Logger logger = LoggerFactory.getLogger(MeetingRepository.class);
+
+    String filePath = "meetings.json";
     private List<Meeting> meetings;
 
     @Autowired
@@ -27,15 +31,15 @@ public class MeetingRepository {
         try {
             File file = new File(filePath);
             if (file.exists()) {
-                System.out.println("Reading meetings from " + filePath);
-                meetings = mapper.readValue(file, new TypeReference<List<Meeting>>() {});
+                logger.info("Reading meetings from {}", filePath);
+                meetings = mapper.readValue(file, new TypeReference<>() {});
             } else {
-                System.out.println("File not found. Initializing new meetings list.");
+                logger.info("File not found. Initializing new meetings list.");
                 meetings = new ArrayList<>();
                 mapper.writeValue(file, meetings);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("Could not initialize repository", e);
             throw new RuntimeException("Could not initialize repository", e);
         }
     }
@@ -62,7 +66,7 @@ public class MeetingRepository {
         try {
             mapper.writeValue(new File(filePath), meetings);
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("Could not save meetings to file", e);
             throw new RuntimeException("Could not save meetings to file", e);
         }
     }

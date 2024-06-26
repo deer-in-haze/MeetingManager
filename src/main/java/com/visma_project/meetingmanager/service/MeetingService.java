@@ -16,10 +16,6 @@ public class MeetingService {
     @Autowired
     private MeetingRepository repository;
 
-    public List<Meeting> getAllMeetings() {
-        return repository.findAll();
-    }
-
     public void createMeeting(Meeting meeting) {
         repository.save(meeting);
     }
@@ -39,44 +35,41 @@ public class MeetingService {
     }
 
     public void addPersonToMeeting(String meetingName, String person, LocalDateTime startTime) {
-        Optional<Meeting> meetingOpt = repository.findById(meetingName);
-        if (meetingOpt.isPresent()) {
-            Meeting meeting = meetingOpt.get();
-            if (meeting.getAttendees().contains(person)) {
-                throw new IllegalArgumentException("Person is already in the meeting.");
-            }
-            System.out.println("CHECK");
-            for (Meeting m : repository.findAll()) {
-                if (m.getAttendees().contains(person)) {
-                    if (startTime.isEqual(m.getStartDate()) || startTime.isBefore(m.getEndDate()) && startTime.isAfter(m.getStartDate())) {
-                        throw new IllegalArgumentException("Person is already in another meeting at this time.");
-                    }
-                }
-            }
-
-            meeting.getAttendees().add(person);
-            repository.saveToFile();
-        } else {
-            throw new IllegalArgumentException("Meeting not found.");
-        }
-    }
-
-    public void removePersonFromMeeting(String meetingName, String person) {
     Optional<Meeting> meetingOpt = repository.findById(meetingName);
     if (meetingOpt.isPresent()) {
         Meeting meeting = meetingOpt.get();
-        if (meeting.getResponsiblePerson().equals(person)) {
-            throw new IllegalArgumentException("The responsible person cannot be removed from the meeting.");
+        if (meeting.getAttendees().contains(person)) {
+            throw new IllegalArgumentException("Person is already in the meeting.");
         }
-
-        if (!meeting.getAttendees().contains(person)) {
-            throw new IllegalArgumentException("Person is not in the meeting.");
+        for (Meeting m : repository.findAll()) {
+            if (m.getAttendees().contains(person)) {
+                if (startTime.isBefore(m.getEndDate()) && startTime.isAfter(m.getStartDate())) {
+                    throw new IllegalArgumentException("Person is already in another meeting at this time.");
+                }
+            }
         }
-
-        meeting.getAttendees().remove(person);
+        meeting.getAttendees().add(person);
         repository.saveToFile();
-        } else {
+    } else {
         throw new IllegalArgumentException("Meeting not found.");
+    }
+}
+
+
+    public void removePersonFromMeeting(String meetingName, String person) {
+        Optional<Meeting> meetingOpt = repository.findById(meetingName);
+        if (meetingOpt.isPresent()) {
+            Meeting meeting = meetingOpt.get();
+            if (meeting.getResponsiblePerson().equals(person)) {
+                throw new IllegalArgumentException("The responsible person cannot be removed from the meeting.");
+            }
+            if (!meeting.getAttendees().contains(person)) {
+                throw new IllegalArgumentException("Person is not in the meeting.");
+            }
+            meeting.getAttendees().remove(person);
+            repository.saveToFile();
+        } else {
+            throw new IllegalArgumentException("Meeting not found.");
         }
     }
 
